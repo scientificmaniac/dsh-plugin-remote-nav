@@ -1,6 +1,6 @@
 {
   "name": "dsh-plugin-remote-nav",
-  "version": "1.3.0-beta.3",
+  "version": "1.3.0-beta.4",
   "description": "DeepSeek Harness 内置插件：遥控器 / 方向键空间导航（焦点按屏幕位置移动，OK 激活，返回分层退出，会话长按滚动加速）",
   "type": "module",
   "main": "./index.js",

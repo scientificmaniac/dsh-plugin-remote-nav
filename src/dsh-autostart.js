@@ -25,6 +25,8 @@ export const UI_DEFAULTS = {
   pauseWhileEditing: true,
   leaveEditingOnArrow: true, // 输入框里按方向键先退出输入，避免光标看起来卡住
   scrollColumnLock: true, // 滚动过会话正文后，上下键锁在本列，到底也不跳到别的列
+  preferHeaderTabOnUp: true, // 从会话正文按上键时优先吸附到顶部页签（对话）
+  skipFileLinks: true, // 不把 Markdown 文件引用按钮算作导航候选
   toggleKeys: ['ContextMenu', 'F9'], // 遥控器菜单键 / 键盘 F9
   toggles: [82, 93], // 老 keyCode：82=MENU，93=CONTEXT_MENU
   autoEnableOn: ['?remote=1', '?remote=1&'], // URL 命中即自动开启（TV 快捷方式用）
@@ -42,6 +44,8 @@ const PERSISTENT_KEYS = [
   'pauseWhileEditing',
   'leaveEditingOnArrow',
   'scrollColumnLock',
+  'preferHeaderTabOnUp',
+  'skipFileLinks',
   'toggleKeys',
   'toggles',
   'autoEnableOn',
@@ -134,6 +138,8 @@ export function boot(overrides = {}) {
     pauseWhileEditing: cfg.pauseWhileEditing,
     leaveEditingOnArrow: cfg.leaveEditingOnArrow,
     scrollColumnLock: cfg.scrollColumnLock,
+    preferHeaderTabOnUp: cfg.preferHeaderTabOnUp,
+    skipFileLinks: cfg.skipFileLinks,
     root: cfg.root ? document.querySelector(cfg.root) : null,
   });
 
@@ -235,6 +241,8 @@ export function boot(overrides = {}) {
       if (key === 'extraSelector') applyExtraSelector(value);
       if (key === 'leaveEditingOnArrow') nav.opts.leaveEditingOnArrow = !!value;
       if (key === 'scrollColumnLock') nav.opts.scrollColumnLock = !!value;
+      if (key === 'preferHeaderTabOnUp') nav.opts.preferHeaderTabOnUp = !!value;
+      if (key === 'skipFileLinks') nav.opts.skipFileLinks = !!value;
       if (key === 'scrollStep') nav.opts.scrollStep = Math.max(8, Number(value) || 48);
       if (key === 'scrollAccelerate') nav.opts.scrollAccelerate = !!value;
       if (key === 'scrollAccelMax') nav.opts.scrollAccelMax = Math.max(1, Number(value) || 3);

@@ -5,6 +5,21 @@
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循[语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [1.3.0-beta.4] - 2026-11-11
+
+### 新增
+
+- 从会话正文按上键时优先吸附到顶部页签「对话」，不再被「加载更早」或标题栏按钮截走；
+  翻到顶后继续按上键也会回到该页签。
+- 文件类目标默认不进入导航候选：修改文件卡片（`[data-changed-files]`）、工具详情里的文件路径
+  （`li[data-change]`）、Markdown 文件引用按钮。
+- 「加载更早」按钮按文字精确匹配从候选中排除（覆盖中英日西法德俄葡文案）。
+- 配置项 `preferHeaderTabOnUp`、`skipFileLinks`。
+
+### 变更
+
+- 行为自检页补充页签行、「加载更早」、修改文件卡片、工具详情文件与 Markdown 文件引用等模拟元素。
+
 ## [1.3.0-beta.3] - 2026-11-11
 
 ### 新增

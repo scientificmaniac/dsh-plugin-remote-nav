@@ -42,9 +42,25 @@ const DEFAULTS = {
 
   /* --- 候选元素 --- */
   selector: DEFAULT_SELECTOR,
-  ignoreSelector: '[data-remote-nav-ignore]',
+  ignoreSelector: '[data-remote-nav-ignore],[data-changed-files],li[data-change]',
   // 只跳过元素本身、不连带子元素的候选排除（例：聊天里的“思考/运行命令”展开行）
   skipSelector: '[data-disclosure-row]',
+  // 按文字精确匹配跳过的按钮（“加载更早”会抢走上键，默认不让它入候选）
+  skipTexts: [
+    '加载更早',
+    'Load earlier',
+    '以前を読み込む',
+    'Cargar antes',
+    'Charger plus tôt',
+    'Früher laden',
+    'Загрузить раньше',
+    'Carregar mais cedo',
+  ],
+  // 跳过 Markdown 里的文件引用按钮（title 是路径、文字是文件名）
+  skipFileLinks: true,
+  // 会话顶部“对话 / 轨迹 / 上下文”页签；从正文按上键时优先吸附到第一个页签
+  conversationTabsSelector: '[data-conversation-tabs] [role="tab"]',
+  preferHeaderTabOnUp: true,
   // 输入框分组：整张输入卡片算一个目标，卡片内部的文字输入区不再单独入选
   composerCardSelector: '[data-composer-card]',
   composerInputSelector: '[data-composer-input]',
@@ -200,6 +216,21 @@ function isOccluded(el) {
   // 命中的是包含该元素的布局容器时不算被遮挡（元素本身仍在容器上层）
   if (top.contains(el)) return false;
   return true;
+}
+
+/**
+ * Markdown 文件引用按钮：title 是文件路径，文字是文件名。
+ * 这类按钮（以及“加载更早”）不应该抢方向键的焦点。
+ */
+function isFileLinkButton(el) {
+  if (!el || el.tagName !== 'BUTTON') return false;
+  const title = String(el.getAttribute('title') || '');
+  if (title === '' || !/[\\/]/.test(title)) return false;
+  const text = String(el.textContent || '').trim();
+  if (text === '') return false;
+  if (text === title) return true;
+  const base = title.split(/[\\/]/).pop() || '';
+  return base !== '' && (text === base || title.endsWith('/' + text) || title.endsWith('\\' + text));
 }
 
 function rectOf(el) {
@@ -531,6 +562,13 @@ export class RemoteNav {
       if (!isCandidateVisible(el)) continue;
       // 被粘性输入框 / 弹层盖住的元素不能框：避免出现“虚空选框”
       if (isOccluded(el)) continue;
+      // 会话里的“加载更早”会抢走上键：按文字精确匹配排除
+      if (this.opts.skipTexts && this.opts.skipTexts.length > 0) {
+        const text = String(el.textContent || '').trim().toLowerCase();
+        if (text !== '' && this.opts.skipTexts.some((item) => text === String(item).trim().toLowerCase())) continue;
+      }
+      // Markdown 文件引用按钮（会被当成“修改的文件/文件链接”选中）：默认排除
+      if (this.opts.skipFileLinks && isFileLinkButton(el)) continue;
       out.push(el);
     }
     this._items = out;
@@ -659,6 +697,14 @@ export class RemoteNav {
           return true;
         }
       }
+      // 向上翻到顶：把光标交给顶部页签（默认“对话”），而不是卡死在正文里
+      if (dir === 'up' && this.opts.preferHeaderTabOnUp !== false) {
+        const tab = this._conversationTabAbove(curEl || this._current);
+        if (tab) {
+          this._focus(tab, 'header-tab');
+          return true;
+        }
+      }
       this._bounce();
       this._emit('boundary', { direction: dir, element: curEl });
       return false;
@@ -693,6 +739,20 @@ export class RemoteNav {
     const curRect = rectOf(curEl);
     const best = pickDirectional(dir, curRect, cands, this.opts);
     if (best) {
+      // 从正文按上键、且下一个目标已经离开正文：优先吸附到顶部页签（默认“对话”），
+      // 而不是跳到“加载更早”或标题栏按钮。
+      if (
+        dir === 'up' &&
+        this.opts.preferHeaderTabOnUp !== false &&
+        this._isInConversation(curEl) &&
+        !this._isInConversation(best.el)
+      ) {
+        const tab = this._conversationTabAbove(curEl);
+        if (tab) {
+          this._focus(tab, 'header-tab');
+          return true;
+        }
+      }
       // 阅读会话时，上下键优先滚动正文；只有滚到头了才把光标交给输入框
       if (this._preferScrollOverJump(dir, best.el)) {
         this._emit('scroll', { direction: dir, element: curEl });
@@ -715,6 +775,15 @@ export class RemoteNav {
     if (this.opts.scrollOnBoundary && this._scrollByDirection(dir)) {
       this._emit('scroll', { direction: dir, element: curEl });
       return true;
+    }
+
+    // 正文顶上没有可去元素时，上键吸附到顶部页签（默认“对话”）
+    if (dir === 'up' && this.opts.preferHeaderTabOnUp !== false && this._isInConversation(curEl)) {
+      const tab = this._conversationTabAbove(curEl);
+      if (tab) {
+        this._focus(tab, 'header-tab');
+        return true;
+      }
     }
 
     // 边界：停住 + 视觉回弹反馈
@@ -756,6 +825,37 @@ export class RemoteNav {
       }
     }
     return best;
+  }
+
+  /** 元素是否落在会话正文滚动区里 */
+  _isInConversation(el) {
+    if (!el || typeof el.closest !== 'function') return false;
+    try {
+      return el.closest(this.opts.conversationScrollSelector) !== null;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /** 正文上方第一个可见页签（默认就是“对话”），上键离开正文时吸附到这里 */
+  _conversationTabAbove(el) {
+    if (!el) return null;
+    const sel = this.opts.conversationTabsSelector;
+    if (!sel) return null;
+    let nodes;
+    try {
+      nodes = document.querySelectorAll(sel);
+    } catch (_) {
+      return null;
+    }
+    const top = el.getBoundingClientRect().top;
+    for (let i = 0; i < nodes.length; i++) {
+      const tab = nodes[i];
+      if (!isCandidateVisible(tab) || isOccluded(tab)) continue;
+      if (tab.getBoundingClientRect().bottom > top + 2) continue;
+      return tab;
+    }
+    return null;
   }
 
   /** 设置焦点到指定元素 */

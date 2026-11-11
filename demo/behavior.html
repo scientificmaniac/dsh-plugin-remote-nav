@@ -34,6 +34,14 @@
       }
       aside button:hover { background: #f2f4f8; }
       main { padding: 16px; overflow: hidden; display: flex; flex-direction: column; gap: 12px; min-height: 0; }
+      .tabs { display: flex; gap: 8px; }
+      .tabs button { padding: 5px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); font: inherit; cursor: pointer; }
+      .tabs button[aria-selected='true'] { background: #eaf2ff; border-color: #bcd4ff; }
+      .older { margin-bottom: 10px; }
+      .older button { padding: 6px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); font: inherit; cursor: pointer; }
+      [data-changed-files] { margin: 12px 0; padding: 8px; border: 1px solid var(--line); border-radius: 10px; background: #fafbfc; }
+      [data-changed-files] button { margin-right: 8px; padding: 4px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); font: inherit; cursor: pointer; }
+      .filelink { padding: 2px 6px; border: 1px dashed var(--line); border-radius: 6px; background: var(--panel); font: inherit; cursor: pointer; }
       .scroller { flex: 1; min-height: 0; overflow: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
       .filler { color: var(--muted); white-space: pre-wrap; }
       [data-disclosure-row] { margin: 10px 0; padding: 6px 10px; border-radius: 8px; background: #eef2f7; cursor: pointer; }
@@ -71,14 +79,22 @@
       </aside>
 
       <main>
+        <div class="tabs" data-conversation-tabs role="tablist">
+          <button type="button" role="tab" id="tab-chat" aria-selected="true">对话</button>
+          <button type="button" role="tab" id="tab-trajectory">轨迹</button>
+          <button type="button" role="tab" id="tab-context">上下文</button>
+        </div>
+
         <div class="scroller" id="scroll" data-conversation-scroll>
+          <div class="older"><button type="button" id="loadearlier">加载更早</button></div>
+
           <div class="filler" id="filler">
             会话正文（可上下滚动，用方向键在边界处滚动，长按加速）……
 
             这里放一段足够长的文字，用来验证“没有候选元素时按上下键滚动会话”。
 
             滚动区域里还有一个可点按钮，虚拟光标停在这个按钮上时，向下移动会先找候选，
-            找不到才滚动。
+            找不到才滚动。行内还有一个文件引用：<button type="button" class="filelink" id="filelink" title="docs/架构说明.md">架构说明.md</button>。
           </div>
 
           <div data-disclosure-row role="button" tabindex="0" id="reasoning">思考 · 这一行是记录行，不应成为导航候选</div>
@@ -100,6 +116,15 @@
           <div style="height: 2400px"></div>
 
           <!-- 这个按钮靠近底部，往下滚动时会被粘性输入卡片盖住（不应被框住） -->
+          <div data-changed-files id="changedfiles">
+            <button type="button" id="cf1">README.md</button>
+            <button type="button" id="cf2">src/remote-nav.js</button>
+          </div>
+
+          <ul>
+            <li data-change="added" id="detailitem"><button type="button" id="detailfile">README.md</button></li>
+          </ul>
+
           <button class="chatbtn" id="hiddenbtn">这个按钮会被粘性输入框挡住（不应被框住）</button>
 
           <!-- 模拟 DSH：输入卡片是滚动区里的粘性元素，正文会从它下面滚过去 -->
