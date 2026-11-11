@@ -11,6 +11,7 @@
 
 - 插件市场 / 收录资料：`assets/icon-180.png`（180×180 方形位图）、根目录 `screenshots.json`（2 张截图）。
 - `docs/收录与市场.md`：逐项对照收录规范，附可直接提交的条目 YAML 与推送后待办。
+- `docs/scientificmaniac__dsh-plugin-remote-nav.yml`：可直接提交的单文件收录条目。
 
 ### 变更
 

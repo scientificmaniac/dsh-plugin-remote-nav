@@ -1,0 +1,7 @@
+url: https://github.com/scientificmaniac/dsh-plugin-remote-nav
+name: scientificmaniac/dsh-plugin-remote-nav
+category: ui
+description:
+  en: Remote-control and arrow-key spatial navigation for the DeepSeek Harness web UI.
+  zh: 为 DeepSeek Harness Web UI 提供遥控器 / 方向键空间导航。
+icon: https://raw.githubusercontent.com/scientificmaniac/dsh-plugin-remote-nav/main/assets/icon-180.png

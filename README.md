@@ -11,6 +11,8 @@
 
 这是 DSH 的**内置插件**（profile bundle），不依赖油猴脚本或浏览器扩展。
 
+<img src="assets/icon-180.png" alt="插件图标" width="96" />
+
 ## 功能特性
 
 - `↑↓←→` 按屏幕几何位置移动焦点（与 DOM 顺序无关），`Enter` / OK 激活，返回键退出。
@@ -44,6 +46,7 @@ dsh plugin add github:scientificmaniac/dsh-plugin-remote-nav
 ```
 
 > owner/repo 按本仓库的实际地址替换；当前仓库地址尚未最终确定，见 [docs/收录与市场.md](docs/收录与市场.md)。
+> 具体安装命令以你使用的 DSH 版本为准。
 
 仓库已提交预构建的 `client.js`，从源码安装**不需要执行构建步骤**。
 
@@ -190,6 +193,7 @@ npm run demo    # 本地静态服务器，http://127.0.0.1:8125/demo/standalone.
 - [架构说明](docs/架构说明.md)：bundle 结构、客户端生命周期、与 DSH DOM 的协作约定。
 - [验证记录](docs/验证记录.md)：自动化测试、浏览器自检、真机验证与限制。
 - [收录与市场](docs/收录与市场.md)：收录条件检查、可直接提交的条目 YAML、推送后的待办。
+- [收录条目 YAML](docs/scientificmaniac__dsh-plugin-remote-nav.yml)：可直接提交到 awesome-dsh-plugin 的单文件条目。
 - [更新日志](CHANGELOG.md)
 - [贡献指南](CONTRIBUTING.md)
 
