@@ -59,7 +59,7 @@ dsh plugin add github:scientificmaniac/dsh-plugin-remote-nav
 把仓库克隆或下载到本地任意目录（路径可包含中文），然后让 Agent 或插件管理安装这个**本地 bundle**：
 
 ```js
-plugin_manager({ action: 'install_bundle', target: 'E:\\ai project\\小米遥控器兼容插件' })
+plugin_manager({ action: 'install_bundle', target: '插件路径' })
 ```
 
 安装完成后：
@@ -72,7 +72,7 @@ plugin_manager({ action: 'install_bundle', target: 'E:\\ai project\\小米遥控
 
 ```js
 plugin_manager({ action: 'remove_bundle', target: 'dsh-plugin-remote-nav' })
-plugin_manager({ action: 'install_bundle', target: 'E:\\ai project\\小米遥控器兼容插件' })
+plugin_manager({ action: 'install_bundle', target: '插件路径' })
 ```
 
 也可以重开 DSH 桌面端。注意：更新 `client.js`（客户端代码）需要界面重新加载后才生效。
@@ -199,8 +199,6 @@ npm run demo    # 本地静态服务器，http://127.0.0.1:8125/demo/standalone.
 
 - [架构说明](docs/架构说明.md)：bundle 结构、客户端生命周期、与 DSH DOM 的协作约定。
 - [验证记录](docs/验证记录.md)：自动化测试、浏览器自检、真机验证与限制。
-- [收录与市场](docs/收录与市场.md)：收录条件检查、可直接提交的条目 YAML、推送后的待办。
-- [收录条目 YAML](docs/scientificmaniac__dsh-plugin-remote-nav.yml)：可直接提交到 awesome-dsh-plugin 的单文件条目。
 - [更新日志](CHANGELOG.md)
 - [贡献指南](CONTRIBUTING.md)
 
@@ -218,4 +216,4 @@ npm run demo    # 本地静态服务器，http://127.0.0.1:8125/demo/standalone.
 
 ## 许可证
 
-[MIT](LICENSE)。文档使用中文；`LICENSE` 保留标准英文原文（法律文本惯例）。
+[MIT](LICENSE)
