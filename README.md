@@ -1,10 +1,10 @@
 # dsh-plugin-remote-nav
 
 [![许可证](https://img.shields.io/badge/%E8%AE%B8%E5%8F%AF%E8%AF%81-MIT-yellow.svg)](LICENSE)
-![版本](https://img.shields.io/badge/%E7%89%88%E6%9C%AC-1.3.0--beta.1-blue)
+![版本](https://img.shields.io/badge/%E7%89%88%E6%9C%AC-1.3.0--beta.2-blue)
 ![运行环境](https://img.shields.io/badge/Node.js-%E2%89%A5%2022-339933)
 
-> 当前版本 **1.3.0-beta.1（测试版）**：行为仍可能调整，安装方式为本地 bundle。
+> 当前版本 **1.3.0-beta.2（测试版）**：行为仍可能调整。
 
 给 **DeepSeek Harness（DSH）Web UI** 加「遥控器 / 方向键导航模式」：用遥控器、手柄或纯键盘，
 按屏幕**视觉位置**在界面里移动焦点，适合 TV、盒子、客厅电脑等场景。
@@ -35,7 +35,19 @@
 - DSH 桌面端或 DSH Web（0.2.x 系列）。
 - Node.js ≥ 22（仅构建与测试需要，插件运行时不依赖 Node 模块）。
 
-### 安装到 DSH（推荐）
+### 从 GitHub 安装
+
+仓库在 `package.json` 中声明了 `dsh.bundle`，推送到 GitHub 后可以直接按仓库地址安装：
+
+```bash
+dsh plugin add github:scientificmaniac/dsh-plugin-remote-nav
+```
+
+> owner/repo 按本仓库的实际地址替换；当前仓库地址尚未最终确定，见 [docs/收录与市场.md](docs/收录与市场.md)。
+
+仓库已提交预构建的 `client.js`，从源码安装**不需要执行构建步骤**。
+
+### 本地目录安装（开发）
 
 把仓库克隆或下载到本地任意目录（路径可包含中文），然后让 Agent 或插件管理安装这个**本地 bundle**：
 
@@ -132,7 +144,9 @@ index.js                  宿主侧 Cordis 入口（占位；能力在客户端�
 client.js                 DSH Web UI 客户端插件（构建产物，安装时直接使用）
 cordis.patch.yml          Loader 补丁：插入宿主插件行
 locale/                   插件清单里的标题 / 描述（中文、英文）
-icon.svg                  插件图标
+icon.svg                  插件图标（DSH 插件清单）
+assets/icon-180.png       插件市场图标（GitHub 托管位图）
+screenshots.json          插件市场截图声明（1–8 张）
 src/remote-nav.js         核心引擎：寻路 / 边界 / 滚动 / 返回键 / 高亮
 src/dsh-autostart.js      页面侧引导：挂载 / HUD / 菜单键 / 诊断 / 可逆 destroy
 src/dsh-client.js         客户端插件入口：apply、侧边栏开关按钮、locale
@@ -140,7 +154,7 @@ src/remote-nav.css        高亮、HUD、开关按钮样式
 scripts/build.mjs         构建：把 src/ 拼成 client.js
 tests/                    寻路单测 + 客户端插件测试
 demo/                     开发演示与行为自检页（直接加载 src/ 源码）
-docs/                     架构说明、验证记录与截图
+docs/                     架构说明、验证记录、收录与市场资料、截图
 ```
 
 ## 开发与测试
@@ -160,10 +174,22 @@ npm run demo    # 本地静态服务器，http://127.0.0.1:8125/demo/standalone.
 
 仓库内的 `client.js` 是构建产物，必须随源码一起提交；安装 DSH 插件时直接使用它。
 
+## 市场与收录
+
+本仓库按 DSH 插件收录规范准备：
+
+- **市场图标**：`assets/icon-180.png`（180×180 方形 PNG，GitHub 托管）；
+- **市场截图**：根目录 `screenshots.json` 声明 2 张（导航 HUD、侧边栏开关）；
+- **收录条目**：可直接提交到 awesome-dsh-plugin 的条目文件与逐项检查清单见 [docs/收录与市场.md](docs/收录与市场.md)；
+- **manifest**：`package.json` 的 `dsh.bundle.patch` 指向 `cordis.patch.yml`，满足 `dsh plugin add` 的安装条件。
+
+> 推送到 GitHub 后还需要：给仓库添加 `dsh-plugin` topic，并等仓库创建满 1 天再提交收录 PR。
+
 ## 文档
 
 - [架构说明](docs/架构说明.md)：bundle 结构、客户端生命周期、与 DSH DOM 的协作约定。
 - [验证记录](docs/验证记录.md)：自动化测试、浏览器自检、真机验证与限制。
+- [收录与市场](docs/收录与市场.md)：收录条件检查、可直接提交的条目 YAML、推送后的待办。
 - [更新日志](CHANGELOG.md)
 - [贡献指南](CONTRIBUTING.md)
 

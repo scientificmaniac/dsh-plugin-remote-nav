@@ -5,6 +5,18 @@
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循[语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [1.3.0-beta.2] - 2026-11-11
+
+### 新增
+
+- 插件市场 / 收录资料：`assets/icon-180.png`（180×180 方形位图）、根目录 `screenshots.json`（2 张截图）。
+- `docs/收录与市场.md`：逐项对照收录规范，附可直接提交的条目 YAML 与推送后待办。
+
+### 变更
+
+- 移除 `package.json` 的 `private` 字段，使仓库可按 `dsh.bundle` 被 `dsh plugin add` 安装。
+- README 补充从 GitHub 安装流程与市场资料说明；CONTRIBUTING 补充收录与市场规范。
+
 ## [1.3.0-beta.1] - 2026-11-11
 
 > 当前为测试版（beta），暂不发布稳定版；安装方式仍是本地 bundle。

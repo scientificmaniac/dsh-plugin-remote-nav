@@ -50,6 +50,17 @@
 - 改了 `src/` 后必须重新 `npm run build` 再提交；
 - 不要手改构建产物，它由 `scripts/build.mjs` 生成。
 
+## 收录与市场规范
+
+本仓库面向 DSH 插件市场与收录列表，以下内容不要破坏：
+
+- `package.json` 必须保留 `dsh.bundle.patch`（缺少它 `dsh plugin add` 无法安装）；只声明 `dsh.client` 不算可安装。
+- 市场图标保持为 **GitHub 托管的位图**（`assets/icon-180.png`，方形 PNG），不要换成 SVG 或第三方图床。
+- 市场截图维护在根目录 `screenshots.json`：1–8 张、相对路径、不得跳出本仓库。
+- 功能或行为变化后，检查 [docs/收录与市场.md](docs/收录与市场.md) 里的条目描述是否仍准确；
+  描述会被逐句对照代码检查，不要夸大或写不存在的命令 / API。
+- 提交收录 PR 时只提交对方仓库的 `data/plugins/<owner>__<repo>.yml` 一个文件，不要手工编辑对方生成的 README。
+
 ## 文档
 
 - 新增功能或改变行为时，同步更新 README、CHANGELOG 及 `docs/` 中相关说明。

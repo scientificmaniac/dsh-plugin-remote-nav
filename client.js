@@ -1,4 +1,4 @@
-/*! dsh-plugin-remote-nav v1.3.0-beta.1 — 遥控器/方向键空间导航 · 自动生成，勿手改（源文件在 src/） */
+/*! dsh-plugin-remote-nav v1.3.0-beta.2 — 遥控器/方向键空间导航 · 自动生成，勿手改（源文件在 src/） */
 window.__ModuleLoader__.load({
   id: "dsh-plugin-remote-nav",
   factory(require) {
