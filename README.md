@@ -1,10 +1,10 @@
 # dsh-plugin-remote-nav
 
 [![许可证](https://img.shields.io/badge/%E8%AE%B8%E5%8F%AF%E8%AF%81-MIT-yellow.svg)](LICENSE)
-![版本](https://img.shields.io/badge/%E7%89%88%E6%9C%AC-1.3.0--beta.2-blue)
+![版本](https://img.shields.io/badge/%E7%89%88%E6%9C%AC-1.3.0--beta.3-blue)
 ![运行环境](https://img.shields.io/badge/Node.js-%E2%89%A5%2022-339933)
 
-> 当前版本 **1.3.0-beta.2（测试版）**：行为仍可能调整。
+> 当前版本 **1.3.0-beta.3（测试版）**：行为仍可能调整。
 
 给 **DeepSeek Harness（DSH）Web UI** 加「遥控器 / 方向键导航模式」：用遥控器、手柄或纯键盘，
 按屏幕**视觉位置**在界面里移动焦点，适合 TV、盒子、客厅电脑等场景。
@@ -16,7 +16,8 @@
 ## 功能特性
 
 - `↑↓←→` 按屏幕几何位置移动焦点（与 DOM 顺序无关），`Enter` / OK 激活，返回键退出。
-- 阅读长会话时，上下键在正文里连续滚动，**长按自动加速**（1x → 3x）。
+- 阅读长会话时，上下键在正文里连续滚动，**长按自动加速**（1x → 3x）；按到底不会跳到工作区等其他列。
+- 被粘性输入框或弹层挡住的内容不会被框选，滚动回来也不会出现“虚空选框”。
 - 打开已有会话后 DSH 会自动聚焦输入框；此时第一次按方向键会先退出输入，避免光标“卡住”。
 - 返回键分层：先退出输入 → 再关闭菜单 / 弹层 → 最后才退出导航模式。
 - 会话输入框整张卡片算**一个**目标，底部 `+ / 完全权限 / 模型 / 麦克风 / 发送` 各自可选。
@@ -121,6 +122,7 @@ dshNav.set('scrollStep', 48);             // 会话滚动单步(px)
 dshNav.set('scrollAccelerate', true);     // 长按加速开关
 dshNav.set('scrollAccelMax', 3);          // 加速上限倍数
 dshNav.set('scrollAccelRampMs', 900);     // 加速到上限所需的按住时长
+dshNav.set('scrollColumnLock', false);    // 关闭“阅读时上下键锁在本列”
 ```
 
 完整参数见 [`src/remote-nav.js`](src/remote-nav.js) 的 `DEFAULTS`。

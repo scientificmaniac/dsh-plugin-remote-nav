@@ -38,7 +38,17 @@
       .filler { color: var(--muted); white-space: pre-wrap; }
       [data-disclosure-row] { margin: 10px 0; padding: 6px 10px; border-radius: 8px; background: #eef2f7; cursor: pointer; }
       .chatbtn { margin: 8px 0; padding: 6px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); cursor: pointer; }
-      [data-composer-card] { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 10px; }
+      [data-composer-card] {
+        position: sticky;
+        bottom: 0;
+        z-index: 5;
+        margin-top: 16px;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 10px;
+        box-shadow: 0 -6px 18px rgba(0, 0, 0, 0.08);
+      }
       [data-composer-input] { min-height: 64px; outline: none; padding: 6px 8px; border-radius: 10px; background: #f6f8fb; }
       .toolbar { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
       .toolbar button { padding: 5px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); font: inherit; cursor: pointer; }
@@ -50,7 +60,7 @@
     <header>
       <b>remote-nav 行为自检</b>
       <span class="log" id="log">加载中…</span>
-      <span class="tip">F9 开关导航 · 方向键移动 · Esc 返回 · 长按向下滚动会话</span>
+      <span class="tip">F9 开关导航 · 方向键移动 · Esc 返回 · 长按向下滚动会话（到底不跳列 / 遮挡不框）</span>
     </header>
 
     <div class="layout">
@@ -85,19 +95,24 @@
 
             继续填充内容，确保滚动区足够长，可以多次向下滚动。
           </div>
+
           <!-- 保证滚动区一定高于视口，便于验证边界滚动 -->
           <div style="height: 2400px"></div>
-        </div>
 
-        <div data-composer-card tabindex="-1" id="card">
-          <div data-composer-input contenteditable="true" role="textbox" aria-multiline="true" id="editor" data-placeholder="发消息…"></div>
-          <div class="toolbar">
-            <button id="add">＋</button>
-            <button id="perm">完全权限</button>
-            <span class="grow"></span>
-            <button id="model">模型选择</button>
-            <button id="mic">麦克风</button>
-            <button id="send">发送</button>
+          <!-- 这个按钮靠近底部，往下滚动时会被粘性输入卡片盖住（不应被框住） -->
+          <button class="chatbtn" id="hiddenbtn">这个按钮会被粘性输入框挡住（不应被框住）</button>
+
+          <!-- 模拟 DSH：输入卡片是滚动区里的粘性元素，正文会从它下面滚过去 -->
+          <div data-composer-card tabindex="-1" id="card">
+            <div data-composer-input contenteditable="true" role="textbox" aria-multiline="true" id="editor" data-placeholder="发消息…"></div>
+            <div class="toolbar">
+              <button id="add">＋</button>
+              <button id="perm">完全权限</button>
+              <span class="grow"></span>
+              <button id="model">模型选择</button>
+              <button id="mic">麦克风</button>
+              <button id="send">发送</button>
+            </div>
           </div>
         </div>
       </main>

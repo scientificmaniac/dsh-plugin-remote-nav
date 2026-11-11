@@ -68,6 +68,7 @@ const DEFAULTS = {
   scrollAccelMax: 3, // 加速上限倍数
   scrollAccelRampMs: 900, // 从 1x 加速到上限所需的按住时长(ms)
   scrollHoldGapMs: 220, // 两次按键间隔超过它就算重新开始按住
+  scrollColumnLock: true, // 滚动过会话正文后，上下键只在正文列内活动，到底也不会跳到别的列
 
   /* --- 滚动跟随 --- */
   scrollFollow: true,
@@ -171,6 +172,34 @@ function isCandidateVisible(el) {
   const r = el.getBoundingClientRect();
   // 只过滤"物理上点不到"的元素；屏幕外元素保留，用于触发滚动跟随
   return r.width > 1 && r.height > 1;
+}
+
+/** 矩形是否与视口相交（屏幕外元素不画高亮） */
+function intersectsViewport(r) {
+  return r.width > 0 && r.height > 0 && r.right > 0 && r.bottom > 0 && r.left < window.innerWidth && r.top < window.innerHeight;
+}
+
+/**
+ * 元素中心的命中点是否被别的元素挡住（典型：会话正文滚到粘性输入框下面）。
+ * 只对中心在视口内的元素做命中测试；屏幕外元素不判为遮挡，保留滚动跟随能力。
+ */
+function isOccluded(el) {
+  if (typeof document === 'undefined' || typeof document.elementFromPoint !== 'function') return false;
+  const r = el.getBoundingClientRect();
+  if (r.width < 1 || r.height < 1) return false;
+  const cx = r.left + r.width / 2;
+  const cy = r.top + r.height / 2;
+  if (cx < 0 || cy < 0 || cx > window.innerWidth || cy > window.innerHeight) return false;
+  let top = null;
+  try {
+    top = document.elementFromPoint(cx, cy);
+  } catch (_) {
+    return false;
+  }
+  if (!top || top === el || el.contains(top)) return false;
+  // 命中的是包含该元素的布局容器时不算被遮挡（元素本身仍在容器上层）
+  if (top.contains(el)) return false;
+  return true;
 }
 
 function rectOf(el) {
@@ -365,8 +394,8 @@ export class RemoteNav {
 
     // 方向键长按状态：用于边界滚动加速
     this._hold = { dir: null, startedAt: 0, lastAt: 0 };
-    // 阅读滚动模式：一旦在边界处滚动，接下来的上下键继续滚动会话，不急着挑远处候选
-    this._scrolling = false;
+    // 阅读列锁：最近一次滚动过的容器。上下键在此期间只在本列滚动/选候选，不会跳到别的列
+    this._readingScroll = null;
 
     // 所有回调都绑定 this，保持引用以便 destroy 时精确移除
     this._onKeyDown = this._onKeyDown.bind(this);
@@ -414,7 +443,7 @@ export class RemoteNav {
     if (this.enabled) return;
     this.enabled = true;
     this._dirty = true;
-    this._scrolling = false;
+    this._readingScroll = null;
     document.documentElement.classList.add('remote-nav-on');
     if (this._overlay) this._overlay.hidden = true;
     this._observe();
@@ -425,7 +454,7 @@ export class RemoteNav {
   disable() {
     if (!this.enabled) return;
     this.enabled = false;
-    this._scrolling = false;
+    this._readingScroll = null;
     this._clearMark();
     this._current = null;
     this._currentRect = null;
@@ -500,6 +529,8 @@ export class RemoteNav {
         continue;
       }
       if (!isCandidateVisible(el)) continue;
+      // 被粘性输入框 / 弹层盖住的元素不能框：避免出现“虚空选框”
+      if (isOccluded(el)) continue;
       out.push(el);
     }
     this._items = out;
@@ -603,15 +634,52 @@ export class RemoteNav {
     if (!this.enabled) return false;
     if (this._dirty) this._collect();
 
-    // 阅读滚动模式：上下键继续滚动会话（长按加速）；滚到头或换方向再回到候选导航
-    if (this._scrolling && (dir === 'up' || dir === 'down') && this._scrollByDirection(dir)) {
-      this._emit('scroll', { direction: dir, element: this._current });
-      return true;
+    const vertical = dir === 'up' || dir === 'down';
+    const reading = this._readingScroll && this._readingScroll.isConnected ? this._readingScroll : null;
+
+    // 阅读列锁：一旦滚动过会话正文，上下键只在本列滚动 / 选候选，到底也不会跳到工作区等别的列
+    if (reading && vertical && this.opts.scrollColumnLock !== false) {
+      if (this._scrollByDirection(dir)) {
+        this._emit('scroll', { direction: dir, element: this._current });
+        return true;
+      }
+      // 到顶 / 到底：只在本列内继续（例如底部输入框），没有就停住
+      const curEl = this._current && this._current.isConnected ? this._current : null;
+      const cands = this._columnCandidates(reading, curEl);
+      if (curEl) {
+        const best = pickDirectional(dir, rectOf(curEl), cands, this.opts);
+        if (best) {
+          this._focus(best.el, dir);
+          return true;
+        }
+      } else if (cands.length > 0) {
+        const entry = pickEntry(cands, 'center', { width: window.innerWidth, height: window.innerHeight });
+        if (entry) {
+          this._focus(entry.el, 'entry');
+          return true;
+        }
+      }
+      this._bounce();
+      this._emit('boundary', { direction: dir, element: curEl });
+      return false;
+    }
+    if (reading && !vertical) {
+      // 左右键离开正文列，恢复普通导航
+      this._readingScroll = null;
     }
 
-    // 当前焦点失效（被移除/隐藏）时，退化到入口逻辑
+    // 当前焦点失效（被移除 / 隐藏 / 被输入框等挡住）时，先找同列最近可见候选，找不到再退化入口
     let curEl = this._current;
-    if (curEl && (!curEl.isConnected || !isCandidateVisible(curEl))) curEl = null;
+    if (curEl && (!curEl.isConnected || !isCandidateVisible(curEl))) {
+      curEl = null;
+    } else if (curEl && isOccluded(curEl)) {
+      const near = this._nearestVisibleCandidate(curEl);
+      if (near) {
+        this._focus(near, 'relocate-occluded');
+        return true;
+      }
+      curEl = null;
+    }
 
     const cands = this._rects(curEl || null, dir);
 
@@ -655,6 +723,41 @@ export class RemoteNav {
     return false;
   }
 
+  /** 只取某个滚动容器内的候选（阅读列锁用），并排除被遮挡的目标 */
+  _columnCandidates(container, exclude) {
+    const out = [];
+    for (let i = 0; i < this._items.length; i++) {
+      const el = this._items[i];
+      if (el === exclude) continue;
+      if (!el.isConnected) continue;
+      if (!container.contains(el)) continue;
+      if (!isCandidateVisible(el) || isOccluded(el)) continue;
+      out.push(rectOf(el));
+    }
+    return out;
+  }
+
+  /** 找离某个元素最近、当前可见且未被遮挡的候选（用于把光标从被盖住的位置救出来） */
+  _nearestVisibleCandidate(fromEl) {
+    const fromRect = this._currentRect || rectOf(fromEl);
+    const container = scrollableAncestor(fromEl);
+    let best = null;
+    let bestD = Infinity;
+    for (let i = 0; i < this._items.length; i++) {
+      const el = this._items[i];
+      if (!el.isConnected) continue;
+      if (container && !container.contains(el)) continue;
+      if (!isCandidateVisible(el) || isOccluded(el)) continue;
+      const r = rectOf(el);
+      const d = Math.abs(r.cx - fromRect.cx) + Math.abs(r.cy - fromRect.cy);
+      if (d < bestD) {
+        bestD = d;
+        best = el;
+      }
+    }
+    return best;
+  }
+
   /** 设置焦点到指定元素 */
   setCurrent(el) {
     if (!el) return false;
@@ -664,7 +767,7 @@ export class RemoteNav {
 
   _focus(el, reason) {
     this._clearMark();
-    this._scrolling = false;
+    this._readingScroll = null;
     this._current = el;
     this._currentRect = rectOf(el);
     if (this.opts.markElement) el.setAttribute('data-remote-nav-current', '');
@@ -770,6 +873,11 @@ export class RemoteNav {
     }
     const r = el.getBoundingClientRect();
     if (r.width < 1 || r.height < 1) {
+      ov.hidden = true;
+      return;
+    }
+    // 屏幕外 / 被粘性输入框等挡住的元素不画高亮，避免“虚空选框”
+    if (!intersectsViewport(r) || isOccluded(el)) {
       ov.hidden = true;
       return;
     }
@@ -1057,7 +1165,8 @@ export class RemoteNav {
    */
   _scrollByDirection(dir) {
     if (dir !== 'up' && dir !== 'down') return false;
-    const target = this._scrollTarget();
+    const locked = this._readingScroll && this._readingScroll.isConnected ? this._readingScroll : null;
+    const target = locked || this._scrollTarget();
     if (!target) return false;
     const now = Date.now();
     const hold = this._hold;
@@ -1071,7 +1180,8 @@ export class RemoteNav {
     const before = target.scrollTop;
     target.scrollBy({ top: dir === 'down' ? step : -step, behavior: 'auto' });
     const moved = target.scrollTop !== before;
-    if (moved) this._scrolling = true;
+    // 记住正在阅读的列：之后上下键都锁在这一列
+    if (moved) this._readingScroll = target;
     return moved;
   }
 }

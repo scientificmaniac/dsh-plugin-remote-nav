@@ -24,6 +24,7 @@ export const UI_DEFAULTS = {
   highlightPadding: 5,
   pauseWhileEditing: true,
   leaveEditingOnArrow: true, // 输入框里按方向键先退出输入，避免光标看起来卡住
+  scrollColumnLock: true, // 滚动过会话正文后，上下键锁在本列，到底也不跳到别的列
   toggleKeys: ['ContextMenu', 'F9'], // 遥控器菜单键 / 键盘 F9
   toggles: [82, 93], // 老 keyCode：82=MENU，93=CONTEXT_MENU
   autoEnableOn: ['?remote=1', '?remote=1&'], // URL 命中即自动开启（TV 快捷方式用）
@@ -40,6 +41,7 @@ const PERSISTENT_KEYS = [
   'highlightPadding',
   'pauseWhileEditing',
   'leaveEditingOnArrow',
+  'scrollColumnLock',
   'toggleKeys',
   'toggles',
   'autoEnableOn',
@@ -131,6 +133,7 @@ export function boot(overrides = {}) {
     highlightPadding: cfg.highlightPadding,
     pauseWhileEditing: cfg.pauseWhileEditing,
     leaveEditingOnArrow: cfg.leaveEditingOnArrow,
+    scrollColumnLock: cfg.scrollColumnLock,
     root: cfg.root ? document.querySelector(cfg.root) : null,
   });
 
@@ -231,6 +234,7 @@ export function boot(overrides = {}) {
       if (key === 'highlightPadding') nav.opts.highlightPadding = Number(value) || 5;
       if (key === 'extraSelector') applyExtraSelector(value);
       if (key === 'leaveEditingOnArrow') nav.opts.leaveEditingOnArrow = !!value;
+      if (key === 'scrollColumnLock') nav.opts.scrollColumnLock = !!value;
       if (key === 'scrollStep') nav.opts.scrollStep = Math.max(8, Number(value) || 48);
       if (key === 'scrollAccelerate') nav.opts.scrollAccelerate = !!value;
       if (key === 'scrollAccelMax') nav.opts.scrollAccelMax = Math.max(1, Number(value) || 3);
