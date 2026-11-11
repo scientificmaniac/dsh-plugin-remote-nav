@@ -1,0 +1,148 @@
+/* remote-nav.css — 遥控器空间导航高亮样式（零依赖） */
+
+.remote-nav-highlight {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  z-index: 2147483000;
+  pointer-events: none; /* 绝不拦截鼠标/触摸 */
+  box-sizing: border-box;
+  border-radius: 10px;
+  /* 三层视觉：外发光 + 实心描边 + 内描边，保证在任何背景上都"明显" */
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.95), 0 0 0 4px #1677ff, 0 0 18px 4px rgba(22, 119, 255, 0.55),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.35);
+  background: rgba(22, 119, 255, 0.1);
+  transition: transform 120ms ease-out, width 120ms ease-out, height 120ms ease-out;
+  will-change: transform;
+}
+
+.remote-nav-highlight[hidden] {
+  display: none !important;
+}
+
+/* 边界回弹反馈 */
+.remote-nav-highlight.is-bounce {
+  animation: remote-nav-bounce 220ms ease-out;
+}
+
+@keyframes remote-nav-bounce {
+  0% {
+    filter: brightness(1);
+  }
+  30% {
+    filter: brightness(1.6) saturate(1.4);
+  }
+  100% {
+    filter: brightness(1);
+  }
+}
+
+/* 模式开启时的全局微调：隐藏原生 focus ring，避免与高亮框"双框" */
+html.remote-nav-on :focus:not(input):not(textarea):not(select):not([contenteditable='true']) {
+  outline: none !important;
+}
+
+/* 尊重系统"减少动态效果"偏好 */
+@media (prefers-reduced-motion: reduce) {
+  .remote-nav-highlight {
+    transition: none;
+  }
+  .remote-nav-highlight.is-bounce {
+    animation: none;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* DSH 侧边栏脚部的开关按钮（client.js 注册的 slot 组件）               */
+/* ------------------------------------------------------------------ */
+
+.dsh-remote-nav-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  transition: background-color 120ms ease-out, color 120ms ease-out;
+}
+
+.dsh-remote-nav-btn:hover {
+  background: var(--dsw-alias-bg-layer-2, rgba(127, 127, 127, 0.14));
+}
+
+.dsh-remote-nav-btn.is-on {
+  color: var(--dsw-alias-brand-primary, #1677ff);
+  background: var(--dsw-alias-bg-layer-2, rgba(127, 127, 127, 0.14));
+}
+
+.dsh-remote-nav-btn:focus-visible {
+  outline: 2px solid var(--dsw-alias-brand-primary, #1677ff);
+  outline-offset: 1px;
+}
+
+/* 状态文案只给读屏软件，按钮视觉上只有 D-pad 图标 */
+.dsh-remote-nav-btn-tip {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* 导航模式下由虚拟光标接管，按钮的 hover 底色不应再参与视觉反馈 */
+html.remote-nav-on .dsh-remote-nav-btn:hover {
+  background: transparent;
+}
+
+/* ------------------------------------------------------------------ */
+/* TV 场景常驻 HUD（dsh-autostart.js 注入）                             */
+/* ------------------------------------------------------------------ */
+
+.dsh-remote-nav-hud {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 2147483001;
+  display: none; /* 由 JS 控制，只在模式开启时显示 */
+  max-width: 320px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(17, 24, 39, 0.9);
+  color: #fff;
+  font: 12px/1.7 -apple-system, 'Segoe UI', 'Microsoft YaHei', system-ui, sans-serif;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+  backdrop-filter: blur(6px);
+}
+
+.dsh-remote-nav-hud b {
+  font-size: 13px;
+  letter-spacing: 0.02em;
+}
+
+.dsh-remote-nav-hud .dsh-rn-state {
+  margin-left: 8px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: #1677ff;
+  font-size: 11px;
+}
+
+.dsh-remote-nav-hud .dsh-rn-tip {
+  display: block;
+  margin-top: 4px;
+  color: rgba(255, 255, 255, 0.72);
+  font-style: normal;
+}

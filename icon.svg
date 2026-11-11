@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Remote navigation">
+  <defs>
+    <linearGradient id="rn-body" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3d8bff" />
+      <stop offset="1" stop-color="#1457d9" />
+    </linearGradient>
+  </defs>
+  <rect x="14" y="3" width="36" height="58" rx="12" fill="url(#rn-body)" />
+  <circle cx="32" cy="24" r="10.5" fill="rgba(255,255,255,0.16)" stroke="#ffffff" stroke-width="2.6" />
+  <path d="M32 18.5v11M26.5 24h11" fill="none" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round" />
+  <circle cx="32" cy="45" r="3" fill="#ffffff" opacity="0.95" />
+  <circle cx="32" cy="53" r="3" fill="#ffffff" opacity="0.68" />
+</svg>

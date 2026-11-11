@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>遥控器 / 方向键空间导航 · Demo</title>
+    <link rel="stylesheet" href="../src/remote-nav.css" />
+    <style>
+      :root {
+        --bg: #f6f7f9;
+        --panel: #fff;
+        --line: #e5e7eb;
+        --text: #1f2328;
+        --muted: #6b7280;
+        --brand: #1677ff;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font: 14px/1.6 -apple-system, 'Segoe UI', 'Microsoft YaHei', system-ui, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+      }
+      .app {
+        display: grid;
+        grid-template-rows: auto 1fr;
+        height: 100vh;
+      }
+      header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 18px;
+        background: var(--panel);
+        border-bottom: 1px solid var(--line);
+        flex-wrap: wrap;
+      }
+      header h1 {
+        font-size: 15px;
+        margin: 0;
+        font-weight: 600;
+      }
+      .pill {
+        font-size: 12px;
+        padding: 2px 10px;
+        border-radius: 999px;
+        background: #eef2f7;
+        color: var(--muted);
+      }
+      .pill.on {
+        background: #e6f0ff;
+        color: var(--brand);
+      }
+      .spacer {
+        flex: 1;
+      }
+      button {
+        font: inherit;
+        cursor: pointer;
+        border: 1px solid var(--line);
+        background: #fff;
+        color: var(--text);
+        padding: 6px 12px;
+        border-radius: 8px;
+      }
+      button.primary {
+        background: var(--brand);
+        border-color: var(--brand);
+        color: #fff;
+      }
+      button:hover {
+        border-color: var(--brand);
+      }
+      input[type='text'],
+      textarea {
+        font: inherit;
+        width: 100%;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 8px 10px;
+        outline-color: var(--brand);
+      }
+      label.chk {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .body {
+        display: grid;
+        grid-template-columns: 220px 1fr;
+        min-height: 0;
+      }
+      aside {
+        background: var(--panel);
+        border-right: 1px solid var(--line);
+        padding: 12px;
+        overflow: auto;
+      }
+      aside .item {
+        display: block;
+        width: 100%;
+        text-align: left;
+        padding: 8px 10px;
+        border-radius: 8px;
+        border: 1px solid transparent;
+        background: transparent;
+        color: var(--text);
+        margin-bottom: 4px;
+      }
+      aside .item:hover {
+        background: #f3f5f9;
+      }
+      main {
+        padding: 18px;
+        overflow: auto;
+        min-height: 0;
+      }
+      h2 {
+        font-size: 13px;
+        color: var(--muted);
+        font-weight: 600;
+        margin: 20px 0 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+      h2:first-child {
+        margin-top: 0;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+      }
+      .card {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 12px;
+        text-align: left;
+        min-height: 84px;
+      }
+      .card b {
+        display: block;
+        font-size: 13px;
+      }
+      .card span {
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .row {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .chip {
+        border-radius: 999px;
+        padding: 6px 14px;
+        border: 1px solid var(--line);
+        background: var(--panel);
+      }
+      .list {
+        max-height: 200px;
+        overflow: auto;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: var(--panel);
+        padding: 6px;
+      }
+      .list button {
+        display: block;
+        width: 100%;
+        text-align: left;
+        border: 1px solid transparent;
+        background: transparent;
+        margin-bottom: 2px;
+      }
+      .composer {
+        margin-top: 18px;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 10px;
+        display: flex;
+        gap: 10px;
+        align-items: flex-end;
+      }
+      .composer textarea {
+        resize: vertical;
+        min-height: 56px;
+      }
+      .hint {
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 16px;
+        line-height: 1.9;
+      }
+      kbd {
+        background: #eef1f5;
+        border: 1px solid var(--line);
+        border-bottom-width: 2px;
+        border-radius: 5px;
+        padding: 1px 6px;
+        font: 12px/1.4 ui-monospace, Menlo, Consolas, monospace;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <header>
+        <h1>DeepSeek harness · 遥控器导航</h1>
+        <span class="pill" id="status">模式：关闭</span>
+        <span class="spacer"></span>
+        <label class="chk"><input type="checkbox" id="wrap" /> 边界循环</label>
+        <label class="chk"><input type="checkbox" id="follow" checked /> 滚动跟随</label>
+        <label class="chk">
+          入口
+          <select id="entry">
+            <option value="top-left">左上</option>
+            <option value="center">居中</option>
+            <option value="dom-first">DOM 首个</option>
+          </select>
+        </label>
+        <button id="add">动态新增</button>
+        <button id="shuffle">打乱 DOM 顺序</button>
+        <button class="primary" id="toggle">启用导航</button>
+      </header>
+
+      <div class="body">
+        <aside>
+          <button class="item">新建对话</button>
+          <button class="item">今天的会话：空间导航笔记</button>
+          <button class="item">昨天的会话：TV 适配排查</button>
+          <button class="item">上周：遥控器键值映射</button>
+          <button class="item">更早：DeepSeek 客户端封装</button>
+          <button class="item">设置</button>
+        </aside>
+
+        <main id="main">
+          <h2>卡片区（DOM 顺序与视觉顺序不同）</h2>
+          <div class="grid" id="grid"></div>
+
+          <h2>横向 chip</h2>
+          <div class="row" id="chips"></div>
+
+          <h2>可滚动列表（测试焦点跟随滚动）</h2>
+          <div class="list" id="list"></div>
+
+          <h2>输入区（输入框内方向键应保持原生光标移动）</h2>
+          <div class="composer">
+            <textarea id="ta" placeholder="在这里输入内容，测试方向键不被劫持…"></textarea>
+            <button class="primary" id="send">发送</button>
+          </div>
+
+          <div class="hint">
+            <kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> 移动焦点 ·
+            <kbd>Enter</kbd> 激活 · <kbd>Esc</kbd> 退出模式 ·
+            首次按键会选中左上角第一个元素
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <script type="module">
+      import { createRemoteNav } from '../src/remote-nav.js';
+
+      /* ---------- 构造测试内容 ---------- */
+      const grid = document.getElementById('grid');
+      const cards = [
+        ['焦点环', 'overlay 高亮'],
+        ['空间寻路', '几何距离打分'],
+        ['边界策略', '停住 / 循环'],
+        ['动态元素', 'MutationObserver'],
+        ['滚动跟随', 'scrollIntoView 等价'],
+        ['输入保护', '编辑态不劫持'],
+        ['鼠标共存', 'pointerdown 同步'],
+        ['无焦点首键', '入口元素'],
+      ];
+      // 故意按"打乱"的顺序插入 DOM，验证寻路不依赖 DOM 顺序
+      const order = [3, 0, 5, 1, 7, 2, 6, 4];
+      const cardEls = new Map();
+      for (const i of order) {
+        const b = document.createElement('button');
+        b.className = 'card';
+        b.innerHTML = `<b>${cards[i][0]}</b><span>${cards[i][1]}</span>`;
+        b.dataset.idx = String(i);
+        b.addEventListener('click', () => {
+          b.animate?.([{ transform: 'scale(.96)' }, { transform: 'scale(1)' }], { duration: 140 });
+          console.log('card clicked', cards[i][0]);
+        });
+        grid.appendChild(b);
+        cardEls.set(i, b);
+      }
+
+      const chips = document.getElementById('chips');
+      for (const name of ['全部', '代码', '文档', '图片', '语音']) {
+        const b = document.createElement('button');
+        b.className = 'chip';
+        b.textContent = name;
+        chips.appendChild(b);
+      }
+
+      const list = document.getElementById('list');
+      for (let i = 1; i <= 24; i++) {
+        const b = document.createElement('button');
+        b.textContent = `列表项 ${i} · 用于验证焦点进出滚动容器时的自动跟随`;
+        list.appendChild(b);
+      }
+
+      /* ---------- 初始化导航 ---------- */
+      const nav = createRemoteNav({
+        wrap: false,
+        entry: 'top-left',
+        scrollFollow: true,
+        pauseWhileEditing: true,
+        repeatGuardMs: 45,
+        highlightPadding: 5,
+      });
+
+      const status = document.getElementById('status');
+      const toggleBtn = document.getElementById('toggle');
+
+      function syncUI() {
+        status.textContent = `模式：${nav.enabled ? '开启' : '关闭'}`;
+        status.classList.toggle('on', nav.enabled);
+        toggleBtn.textContent = nav.enabled ? '退出导航' : '启用导航';
+      }
+
+      toggleBtn.addEventListener('click', () => {
+        nav.toggle();
+        syncUI();
+      });
+
+      document.getElementById('wrap').addEventListener('change', (e) => {
+        nav.opts.wrap = e.target.checked;
+      });
+      document.getElementById('follow').addEventListener('change', (e) => {
+        nav.opts.scrollFollow = e.target.checked;
+      });
+      document.getElementById('entry').addEventListener('change', (e) => {
+        nav.opts.entry = e.target.value;
+      });
+
+      document.getElementById('add').addEventListener('click', () => {
+        const b = document.createElement('button');
+        b.className = 'card';
+        b.innerHTML = `<b>新增 ${grid.children.length + 1}</b><span>动态插入</span>`;
+        grid.appendChild(b);
+      });
+
+      document.getElementById('shuffle').addEventListener('click', () => {
+        const nodes = [...grid.children].sort(() => Math.random() - 0.5);
+        nodes.forEach((n) => grid.appendChild(n));
+      });
+
+      nav.on('focus', ({ element, reason }) => {
+        console.log('[focus]', reason, element.tagName, element.textContent?.slice(0, 12));
+      });
+      nav.on('boundary', ({ direction }) => console.warn('[boundary]', direction));
+      nav.on('wrap', ({ direction }) => console.log('[wrap]', direction));
+
+      syncUI();
+      // 方便在控制台调试
+      window.nav = nav;
+    </script>
+  </body>
+</html>

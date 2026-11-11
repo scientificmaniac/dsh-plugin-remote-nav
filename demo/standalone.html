@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>DSH 模拟界面 · 直接加载引擎源码</title>
+    <link rel="stylesheet" href="../src/remote-nav.css" />
+    <style>
+      :root {
+        --bg: #f7f8fa;
+        --panel: #fff;
+        --line: #e6e8ec;
+        --text: #1f2328;
+        --muted: #6b7280;
+        --brand: #1677ff;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font: 14px/1.65 -apple-system, 'Segoe UI', 'Microsoft YaHei', system-ui, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        height: 100vh;
+        display: grid;
+        grid-template-rows: auto 1fr;
+      }
+      header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 16px;
+        background: var(--panel);
+        border-bottom: 1px solid var(--line);
+      }
+      header b {
+        font-size: 14px;
+      }
+      .tip {
+        margin-left: auto;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .tip kbd {
+        background: #eef1f5;
+        border: 1px solid var(--line);
+        border-bottom-width: 2px;
+        border-radius: 5px;
+        padding: 1px 6px;
+        font: 12px/1.4 ui-monospace, Consolas, monospace;
+      }
+      .layout {
+        display: grid;
+        grid-template-columns: 210px 1fr;
+        min-height: 0;
+      }
+      aside {
+        background: var(--panel);
+        border-right: 1px solid var(--line);
+        padding: 10px;
+        overflow: auto;
+      }
+      aside button {
+        display: block;
+        width: 100%;
+        text-align: left;
+        padding: 8px 10px;
+        margin-bottom: 4px;
+        border: 1px solid transparent;
+        border-radius: 8px;
+        background: transparent;
+        font: inherit;
+        color: var(--text);
+        cursor: pointer;
+      }
+      aside button:hover {
+        background: #f2f4f8;
+      }
+      main {
+        padding: 16px;
+        overflow: auto;
+        min-height: 0;
+      }
+      .bubble {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 10px 14px;
+        margin-bottom: 10px;
+        max-width: 720px;
+      }
+      .bubble.me {
+        margin-left: auto;
+        background: #e9f1ff;
+        border-color: #cfe0ff;
+      }
+      .actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin: 14px 0 4px;
+      }
+      .actions button {
+        font: inherit;
+        cursor: pointer;
+        border: 1px solid var(--line);
+        background: var(--panel);
+        border-radius: 999px;
+        padding: 6px 14px;
+      }
+      .composer {
+        display: flex;
+        gap: 10px;
+        align-items: flex-end;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 10px;
+        margin-top: 16px;
+      }
+      textarea {
+        flex: 1;
+        min-height: 54px;
+        font: inherit;
+        border: 1px solid transparent;
+        outline: none;
+        resize: vertical;
+      }
+      .composer button {
+        font: inherit;
+        cursor: pointer;
+        border: none;
+        border-radius: 8px;
+        padding: 8px 16px;
+        background: var(--brand);
+        color: #fff;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <b>DeepSeek Harness（模拟）</b>
+      <span style="font-size: 12px; color: #6b7280">直接加载 src/ 下的引擎源码（ESM）</span>
+      <span class="tip"><kbd>菜单键</kbd> / <kbd>F9</kbd> 开关导航 · <kbd>↑↓←→</kbd> 移动 · <kbd>Enter</kbd> 确认 · <kbd>Esc</kbd> 退出</span>
+    </header>
+
+    <div class="layout">
+      <aside id="sessions"></aside>
+
+      <main id="chat">
+        <div class="bubble">你好，我是 DeepSeek。用遥控器试试方向键？</div>
+        <div class="bubble">这一页没有加载任何打包产物，只有 <code>src/</code> 下的引擎源码。</div>
+        <div class="bubble me">帮我总结一下今天的会议。</div>
+        <div class="bubble" id="last">好的，正在整理…（这里省略）</div>
+
+        <div class="actions" id="actions"></div>
+
+        <div class="composer">
+          <textarea id="input" placeholder="输入消息…（输入框内方向键保持原生光标移动）"></textarea>
+          <button id="send">发送</button>
+        </div>
+
+        <div class="actions" id="after"></div>
+      </main>
+    </div>
+
+    <script type="module">
+      // 开发演示：直接把引擎挂到页面里（DSH 插件里由 client.js 完成同样的 boot）
+      import { boot } from '../src/dsh-autostart.js';
+      boot();
+    </script>
+    <script>
+      // 模拟 DSH 的会话列表与操作栏，故意打乱 DOM 插入顺序
+      const sessions = document.getElementById('sessions');
+      ['新建会话', '今天的会话', '昨天的会话', 'TV 适配', '遥控器键值', '设置'].forEach((t, i) => {
+        const b = document.createElement('button');
+        b.textContent = t;
+        b.onclick = () => console.log('session', t);
+        sessions.appendChild(b);
+      });
+
+      const actions = document.getElementById('actions');
+      ['总结', '翻译', '写代码', '画图', '更多'].forEach((t) => {
+        const b = document.createElement('button');
+        b.textContent = t;
+        b.onclick = () => console.log('action', t);
+        actions.appendChild(b);
+      });
+
+      const after = document.getElementById('after');
+      // 反向插入，验证寻路不依赖 DOM 顺序
+      ['重试', '复制', '点赞'].reverse().forEach((t) => {
+        const b = document.createElement('button');
+        b.textContent = t;
+        after.appendChild(b);
+      });
+
+      document.getElementById('send').onclick = () => {
+        const v = document.getElementById('input').value.trim();
+        if (!v) return;
+        const d = document.createElement('div');
+        d.className = 'bubble me';
+        d.textContent = v;
+        document.getElementById('chat').insertBefore(d, document.querySelector('.composer').parentNode);
+        document.getElementById('input').value = '';
+      };
+    </script>
+  </body>
+</html>

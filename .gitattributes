@@ -1,0 +1,21 @@
+# 统一换行：仓库内按 LF 存储，检出时由 Git 按平台转换
+* text=auto
+
+# 文本文件明确按文本处理
+*.js text
+*.mjs text
+*.css text
+*.json text
+*.md text
+*.html text
+*.yml text
+*.yaml text
+
+# 二进制资源
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.woff2 binary
+*.ico binary

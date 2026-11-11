@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>remote-nav 行为自检（候选过滤 / 输入框分组 / 返回键 / 长按加速）</title>
+    <link rel="stylesheet" href="../src/remote-nav.css" />
+    <style>
+      :root {
+        --bg: #f7f8fa;
+        --panel: #fff;
+        --line: #e6e8ec;
+        --text: #1f2328;
+        --muted: #6b7280;
+        --brand: #1677ff;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font: 14px/1.65 -apple-system, 'Segoe UI', 'Microsoft YaHei', system-ui, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        height: 100vh;
+        display: grid;
+        grid-template-rows: auto 1fr;
+      }
+      header { display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: var(--panel); border-bottom: 1px solid var(--line); }
+      header .tip { margin-left: auto; font-size: 12px; color: var(--muted); }
+      .layout { display: grid; grid-template-columns: 220px 1fr; min-height: 0; }
+      aside { background: var(--panel); border-right: 1px solid var(--line); padding: 10px; overflow: auto; }
+      aside button {
+        display: block; width: 100%; text-align: left; padding: 8px 10px; margin-bottom: 4px;
+        border: 1px solid transparent; border-radius: 8px; background: transparent; font: inherit; color: var(--text); cursor: pointer;
+      }
+      aside button:hover { background: #f2f4f8; }
+      main { padding: 16px; overflow: hidden; display: flex; flex-direction: column; gap: 12px; min-height: 0; }
+      .scroller { flex: 1; min-height: 0; overflow: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
+      .filler { color: var(--muted); white-space: pre-wrap; }
+      [data-disclosure-row] { margin: 10px 0; padding: 6px 10px; border-radius: 8px; background: #eef2f7; cursor: pointer; }
+      .chatbtn { margin: 8px 0; padding: 6px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); cursor: pointer; }
+      [data-composer-card] { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 10px; }
+      [data-composer-input] { min-height: 64px; outline: none; padding: 6px 8px; border-radius: 10px; background: #f6f8fb; }
+      .toolbar { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
+      .toolbar button { padding: 5px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); font: inherit; cursor: pointer; }
+      .toolbar .grow { flex: 1; }
+      .log { font-size: 12px; color: var(--muted); }
+    </style>
+  </head>
+  <body>
+    <header>
+      <b>remote-nav 行为自检</b>
+      <span class="log" id="log">加载中…</span>
+      <span class="tip">F9 开关导航 · 方向键移动 · Esc 返回 · 长按向下滚动会话</span>
+    </header>
+
+    <div class="layout">
+      <aside id="sessions">
+        <button id="s1">会话 A（已对话）</button>
+        <button id="s2">会话 B（打开后自动聚焦输入框）</button>
+        <button id="s3">设置</button>
+      </aside>
+
+      <main>
+        <div class="scroller" id="scroll" data-conversation-scroll>
+          <div class="filler" id="filler">
+            会话正文（可上下滚动，用方向键在边界处滚动，长按加速）……
+
+            这里放一段足够长的文字，用来验证“没有候选元素时按上下键滚动会话”。
+
+            滚动区域里还有一个可点按钮，虚拟光标停在这个按钮上时，向下移动会先找候选，
+            找不到才滚动。
+          </div>
+
+          <div data-disclosure-row role="button" tabindex="0" id="reasoning">思考 · 这一行是记录行，不应成为导航候选</div>
+          <div data-disclosure-row role="button" tabindex="0" id="command">运行命令 · 这一行是记录行，不应成为导航候选</div>
+
+          <button class="chatbtn" id="msgbtn">复制回答</button>
+
+          <div class="filler">
+            继续填充内容，确保滚动区足够长，可以多次向下滚动。
+
+            继续填充内容，确保滚动区足够长，可以多次向下滚动。
+
+            继续填充内容，确保滚动区足够长，可以多次向下滚动。
+
+            继续填充内容，确保滚动区足够长，可以多次向下滚动。
+          </div>
+          <!-- 保证滚动区一定高于视口，便于验证边界滚动 -->
+          <div style="height: 2400px"></div>
+        </div>
+
+        <div data-composer-card tabindex="-1" id="card">
+          <div data-composer-input contenteditable="true" role="textbox" aria-multiline="true" id="editor" data-placeholder="发消息…"></div>
+          <div class="toolbar">
+            <button id="add">＋</button>
+            <button id="perm">完全权限</button>
+            <span class="grow"></span>
+            <button id="model">模型选择</button>
+            <button id="mic">麦克风</button>
+            <button id="send">发送</button>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script type="module">
+      // 开发自检：直接把引擎挂到页面里（DSH 插件里由 client.js 完成同样的 boot）
+      import { boot } from '../src/dsh-autostart.js';
+      boot();
+    </script>
+    <script>
+      // 模拟 DSH：打开一个已有会话后，输入框被自动聚焦（光标看起来会卡住的来源）
+      document.getElementById('s2').addEventListener('click', () => {
+        document.getElementById('editor').focus();
+        log('已打开会话 B：输入框自动聚焦');
+      });
+      document.getElementById('s1').addEventListener('click', () => log('已打开会话 A'));
+      document.getElementById('s3').addEventListener('click', () => log('打开设置'));
+      function log(text) {
+        document.getElementById('log').textContent = text;
+      }
+      window.__behaviorLog = log;
+    </script>
+  </body>
+</html>

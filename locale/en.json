@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Remote navigation",
+    "description": "Remote / D-pad spatial navigation for the interface: arrow keys move the highlight by screen position, OK activates, Back exits, and a button at the sidebar foot switches it on or off."
+  }
+}
