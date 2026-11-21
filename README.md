@@ -1,10 +1,10 @@
 # dsh-plugin-remote-nav
 
 [![许可证](https://img.shields.io/badge/%E8%AE%B8%E5%8F%AF%E8%AF%81-MIT-yellow.svg)](LICENSE)
-![版本](https://img.shields.io/badge/%E7%89%88%E6%9C%AC-1.3.0--beta.5-blue)
+![版本](https://img.shields.io/badge/%E7%89%88%E6%9C%AC-1.3.0--beta.6-blue)
 ![运行环境](https://img.shields.io/badge/Node.js-%E2%89%A5%2022-339933)
 
-> 当前版本 **1.3.0-beta.5（测试版）**：行为仍可能调整。
+> 当前版本 **1.3.0-beta.6（测试版）**：行为仍可能调整。
 
 给 **DeepSeek Harness（DSH）Web UI** 加「遥控器 / 方向键导航模式」：用遥控器、手柄或纯键盘，
 按屏幕**视觉位置**在界面里移动焦点，适合 TV、盒子、客厅电脑等场景。
@@ -16,6 +16,7 @@
 ## 功能特性
 
 - 遥控器方向键按屏幕几何位置移动焦点（与 DOM 顺序无关），OK 激活，返回键退出；**不响应键盘按键**。
+- **语音键 push-to-talk**：按住遥控器语音键直接启动 DSH 内置语音听写，松开即停止并转写进输入框。
 - 阅读长会话时，上下键在正文里连续滚动，**长按自动加速**（1x → 3x）；按到底不会跳到工作区等其他列。
 - 被粘性输入框或弹层挡住的内容不会被框选，滚动回来也不会出现“虚空选框”。
 - 修改文件卡片、工具详情里的文件路径、Markdown 文件引用默认不算导航目标；
@@ -101,6 +102,10 @@ plugin_manager({ action: 'install_bundle', target: '插件路径' })
 | 会话内上下键 | 没有候选可去时滚动会话正文，按住会持续加速 |
 | OK / 确定（keyCode 23 / `OK` `Select` `Accept`） | 激活当前焦点（输入卡片 → 进入输入；其余 → 点击） |
 | 返回键（keyCode 4 / 461 / 10009 / `Back` `GoBack`） | 分层：输入框内 → 退出输入；有菜单 / 弹层 → 关闭它；否则退出导航 |
+| 语音键（`Voice` `VoiceSearch` `Speech` / 配置的 keyCode） | **按住**启动内置语音听写，**松开**停止并转写进输入框 |
+
+> 语音键是**按住说话**（push-to-talk），与菜单键的"点按切换"不同。若你的遥控器语音键报的是数字 keyCode，
+> 用 `dshNav.set('voiceKeys', [你的keyCode])` 配置；语义名 `Voice/VoiceSearch/Speech` 无需配置即可识别。
 
 ### 会话阅读与输入框
 
@@ -130,6 +135,8 @@ dshNav.set('scrollAccelRampMs', 900);     // 加速到上限所需的按住时�
 dshNav.set('scrollColumnLock', false);    // 关闭“阅读时上下键锁在本列”
 dshNav.set('preferHeaderTabOnUp', false); // 关闭“正文按上键优先吸附到对话页签”
 dshNav.set('skipFileLinks', false);       // 让 Markdown 文件引用按钮重新可选中
+dshNav.set('voiceKeys', [155]);           // 遥控器语音键的 keyCode（按实际遥控器设）
+dshNav.set('voiceEnabled', false);        // 关闭语音键 push-to-talk
 ```
 
 完整参数见 [`src/remote-nav.js`](src/remote-nav.js) 的 `DEFAULTS`。

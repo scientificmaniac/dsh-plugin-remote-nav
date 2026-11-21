@@ -4,6 +4,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { pickDirectional, pickWrap, pickEntry, scrollForce, directionOf, isActivationKey, isBackKey } from '../src/remote-nav.js';
+import { isVoiceKey, startVoice, stopVoice, VOICE_KEY_NAMES } from '../src/voice.js';
 
 const CFG = { crossAxisWeight: 2.2, alignmentSlack: 64, wrapCrossSlack: 96 };
 
@@ -148,4 +149,48 @@ test('返回键只认遥控器语义与 keyCode 4/461/10009，不认键盘 Esc/B
   assert.equal(isBackKey({ key: '', keyCode: 10009 }), true);
   assert.equal(isBackKey({ key: 'Escape', keyCode: 27 }), false);
   assert.equal(isBackKey({ key: 'Backspace', keyCode: 8 }), false);
+});
+
+test('语音键只认遥控器语义名与配置的 keyCode，键盘按键不触发', () => {
+  assert.equal(isVoiceKey({ key: 'Voice' }), true);
+  assert.equal(isVoiceKey({ key: 'VoiceSearch' }), true);
+  assert.equal(isVoiceKey({ key: 'Speech' }), true);
+  assert.equal(isVoiceKey({ key: '', keyCode: 155 }, [155]), true);
+  assert.equal(isVoiceKey({ key: 'v', keyCode: 86 }, [155]), false);
+  assert.equal(VOICE_KEY_NAMES.indexOf('F9'), -1);
+});
+
+test('语音键 push-to-talk：按下点麦克风，松开点停止并识别', () => {
+  const clicks = [];
+  const makeBtn = (label) => ({
+    tagName: 'BUTTON',
+    disabled: false,
+    getAttribute: (name) => (name === 'aria-label' ? label : null),
+    click: () => clicks.push(label),
+  });
+  const mic = makeBtn('开始录音');
+  const stop = makeBtn('停止并识别');
+  const scope = {
+    querySelectorAll: () => [mic, stop],
+  };
+  globalThis.document = scope;
+  try {
+    assert.equal(startVoice(scope), true);
+    assert.equal(clicks[0], '开始录音');
+    assert.equal(stopVoice(scope), true);
+    assert.equal(clicks[1], '停止并识别');
+  } finally {
+    delete globalThis.document;
+  }
+});
+
+test('语音键：找不到麦克风按钮时安静返回 false（不抛异常）', () => {
+  const scope = { querySelectorAll: () => [] };
+  globalThis.document = scope;
+  try {
+    assert.equal(startVoice(scope), false);
+    assert.equal(stopVoice(scope), false);
+  } finally {
+    delete globalThis.document;
+  }
 });

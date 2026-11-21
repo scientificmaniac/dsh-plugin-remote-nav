@@ -39,6 +39,7 @@ function indent(code, spaces) {
 
 const css = readFileSync(resolve(ROOT, 'src/remote-nav.css'), 'utf8');
 const core = toScript('src/remote-nav.js');
+const voice = toScript('src/voice.js');
 const autostart = toScript('src/dsh-autostart.js');
 const clientEntry = toScript('src/dsh-client.js');
 
@@ -52,6 +53,8 @@ window.__ModuleLoader__.load({
     const __CSS__ = ${JSON.stringify(css)};
 
 ${indent(core, 4)}
+
+${indent(voice, 4)}
 
 ${indent(autostart, 4)}
 

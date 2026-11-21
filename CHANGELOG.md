@@ -5,6 +5,15 @@
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循[语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [1.3.0-beta.6] - 2026-11-21
+
+### 新增
+
+- **语音键 push-to-talk**：按住遥控器语音键启动 DSH 内置语音听写，松开停止并转写进输入框。
+- 语音键通过 `conversation.input.activity` 的麦克风按钮（多语言 aria-label 定位）触发，不改动业务代码。
+- 配置项 `voiceKeys`（遥控器语音键 keyCode）、`voiceEnabled`（默认开启）；长按去抖、失焦/卸载兜底结束录音。
+- 3 项语音键单测（共 23 项）：语义名/keyCode 识别、点麦克风→点停止、找不到按钮时安静返回。
+
 ## [1.3.0-beta.5] - 2026-11-21
 
 ### 变更

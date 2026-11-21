@@ -13,6 +13,7 @@
  * 并在插件卸载时调用 destroy()。
  */
 import { createRemoteNav } from './remote-nav.js';
+import { isVoiceKey, startVoice, stopVoice } from './voice.js';
 
 const STORAGE_KEY = 'dsh:remoteNav:config';
 const STYLE_ATTR = 'data-dsh-remote-nav';
@@ -29,6 +30,8 @@ export const UI_DEFAULTS = {
   skipFileLinks: true, // 不把 Markdown 文件引用按钮算作导航候选
   toggleKeys: ['Menu', 'ContextMenu'], // 遥控器菜单键语义名（不含键盘 F9）
   toggles: [82, 93], // 遥控器菜单键 keyCode：82=MENU，93=CONTEXT_MENU
+  voiceKeys: [], // 遥控器语音键 keyCode（语义名 Voice/VoiceSearch/Speech 无需配置）
+  voiceEnabled: true, // 是否启用语音键 push-to-talk
   autoEnableOn: ['?remote=1', '?remote=1&'], // URL 命中即自动开启（TV 快捷方式用）
   hud: true,
   extraSelector: '', // 真实 DSH 里可交互但不符合默认选择器时，追加这里
@@ -48,6 +51,8 @@ const PERSISTENT_KEYS = [
   'skipFileLinks',
   'toggleKeys',
   'toggles',
+  'voiceKeys',
+  'voiceEnabled',
   'autoEnableOn',
   'hud',
   'extraSelector',
@@ -175,6 +180,40 @@ export function boot(overrides = {}) {
   };
   window.addEventListener('keydown', onMenuKey, true);
 
+  /* --- 遥控器语音键 push-to-talk：按住开始听写，松开停止并转写 --- */
+  let voiceHeld = false; // 防止长按 keydown 连发重复触发
+  const onVoiceDown = (e) => {
+    if (!cfg.voiceEnabled || !isVoiceKey(e, cfg.voiceKeys || [])) return;
+    if (e.repeat || voiceHeld) {
+      e.preventDefault();
+      return;
+    }
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    voiceHeld = true;
+    e.preventDefault();
+    e.stopPropagation();
+    // 不依赖导航模式是否开启：语音键任何时候都可用
+    startVoice(document);
+  };
+  const onVoiceUp = (e) => {
+    if (!cfg.voiceEnabled || !isVoiceKey(e, cfg.voiceKeys || [])) return;
+    if (!voiceHeld) return;
+    voiceHeld = false;
+    e.preventDefault();
+    e.stopPropagation();
+    stopVoice(document);
+  };
+  window.addEventListener('keydown', onVoiceDown, true);
+  window.addEventListener('keyup', onVoiceUp, true);
+  // 页面失焦时兜底结束，避免“卡在录音中”
+  const onVoiceBlur = () => {
+    if (voiceHeld) {
+      voiceHeld = false;
+      stopVoice(document);
+    }
+  };
+  window.addEventListener('blur', onVoiceBlur, true);
+
   /* --- 业务侧可能主动重新聚焦输入框：保持 HUD 状态一致 --- */
   const onEnter = () => syncHud();
   const onLeave = () => syncHud();
@@ -255,6 +294,10 @@ export function boot(overrides = {}) {
       if (destroyed) return;
       destroyed = true;
       window.removeEventListener('keydown', onMenuKey, true);
+      window.removeEventListener('keydown', onVoiceDown, true);
+      window.removeEventListener('keyup', onVoiceUp, true);
+      window.removeEventListener('blur', onVoiceBlur, true);
+      if (voiceHeld) stopVoice(document); // 卸载时若还按着，结束录音
       nav.off('enter', onEnter);
       nav.off('leave', onLeave);
       try {
