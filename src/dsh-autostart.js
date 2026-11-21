@@ -3,7 +3,7 @@
  *
  * 职责：
  *   1. 幂等挂载 RemoteNav（核心逻辑见 remote-nav.js，本文件不含寻路代码）
- *   2. 遥控器「菜单键 / F9」切换导航模式
+ *   2. 遥控器「菜单键」切换导航模式（不响应键盘 F9）
  *   3. TV 场景的常驻 HUD（模式状态 + 操作提示）
  *   4. 诊断工具 diagnose()：打印候选元素分布，用于适配真实 DSH 的 DOM
  *   5. 配置持久化（localStorage）
@@ -27,8 +27,8 @@ export const UI_DEFAULTS = {
   scrollColumnLock: true, // 滚动过会话正文后，上下键锁在本列，到底也不跳到别的列
   preferHeaderTabOnUp: true, // 从会话正文按上键时优先吸附到顶部页签（对话）
   skipFileLinks: true, // 不把 Markdown 文件引用按钮算作导航候选
-  toggleKeys: ['ContextMenu', 'F9'], // 遥控器菜单键 / 键盘 F9
-  toggles: [82, 93], // 老 keyCode：82=MENU，93=CONTEXT_MENU
+  toggleKeys: ['Menu', 'ContextMenu'], // 遥控器菜单键语义名（不含键盘 F9）
+  toggles: [82, 93], // 遥控器菜单键 keyCode：82=MENU，93=CONTEXT_MENU
   autoEnableOn: ['?remote=1', '?remote=1&'], // URL 命中即自动开启（TV 快捷方式用）
   hud: true,
   extraSelector: '', // 真实 DSH 里可交互但不符合默认选择器时，追加这里
@@ -76,7 +76,7 @@ function saveConfig(cfg) {
   }
 }
 
-/** 菜单键识别 */
+/** 遥控器菜单键识别（只认遥控器语义名与 keyCode，不认键盘按键） */
 function isMenuKey(e, cfg) {
   if (cfg.toggleKeys.indexOf(e.key) >= 0) return true;
   const lc = e.keyCode || e.which;
@@ -275,7 +275,7 @@ export function boot(overrides = {}) {
   console.info(
     '%c[remote-nav] 已注入',
     'color:#1677ff;font-weight:bold',
-    '\n  菜单键/F9 切换模式 · window.dshNav.diagnose() 查看候选元素分布'
+    '\n  遥控器菜单键切换模式 · window.dshNav.diagnose() 查看候选元素分布'
   );
   return api;
 }

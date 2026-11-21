@@ -104,9 +104,8 @@ const DEFAULTS = {
   repeatGuardMs: 45, // 遥控器连发去抖(ms)
   stopPropagation: true, // 拦截后阻止事件继续冒泡，避免业务侧二次响应
   escape: 'exit', // 'exit' | 'ignore'：返回键分层（退出输入 → 关弹层 → 退出导航）
-  escapeConsume: false, // 退出导航模式时是否阻止 Esc 传下去（默认让页面也能收到）
+  escapeConsume: false, // 退出导航模式时是否阻止返回键继续传播（默认让页面也能收到）
   overlaySelector: '[role="dialog"],[role="alertdialog"],[role="menu"],[role="listbox"]', // 返回键要关掉的弹层
-  toggleKey: null, // 例如 'F9'
   syncOnPointer: true, // 点击后同步虚拟光标
   activation: 'auto', // 'auto'(表单→focus，其它→click) | 'click' | 'focus'
 };
@@ -117,47 +116,50 @@ const DEFAULTS = {
 
 const EPS = 0.5;
 
-/** 方向键识别（兼容标准浏览器 + 电视/WebView 的非常规 key 名 + 老 keyCode） */
-function directionOf(e) {
+/*
+ * 只认遥控器按键，不响应键盘按键。
+ * 遥控器方向键用 TV/WebView 的语义名（Up/Down/Left/Right）或 Android keyCode 19–22；
+ * OK 用遥控器语义名或 DPAD_CENTER(23)；返回用遥控器语义名或 TV 返回 keyCode；
+ * 菜单键在 dsh-autostart.js 里识别。
+ * 键盘的 Arrow* / Enter / Esc / 空格 / 退格 / F9 等一律不处理。
+ */
+
+/** 遥控器方向键识别 */
+export function directionOf(e) {
   switch (e.key) {
-    case 'ArrowUp':
     case 'Up':
     case 'UpArrow':
       return 'up';
-    case 'ArrowDown':
     case 'Down':
     case 'DownArrow':
       return 'down';
-    case 'ArrowLeft':
     case 'Left':
     case 'LeftArrow':
       return 'left';
-    case 'ArrowRight':
     case 'Right':
     case 'RightArrow':
       return 'right';
     default:
       break;
   }
+  // Android DPAD：19=上 20=下 21=左 22=右
   const lc = e.keyCode || e.which;
-  return { 37: 'left', 38: 'up', 39: 'right', 40: 'down' }[lc] || null;
+  return { 19: 'up', 20: 'down', 21: 'left', 22: 'right' }[lc] || null;
 }
 
-/** 回车 / OK 键识别（13=Enter，23=Android DPAD_CENTER） */
-function isActivationKey(e, allowSpace) {
+/** 遥控器 OK / 确定键识别（23=Android DPAD_CENTER） */
+export function isActivationKey(e) {
   const k = e.key;
-  if (k === 'Enter' || k === 'OK' || k === 'Select' || k === 'Accept') return true;
-  if (allowSpace && k === ' ') return true;
-  const lc = e.keyCode || e.which;
-  return lc === 13 || lc === 23;
+  if (k === 'OK' || k === 'Select' || k === 'Accept' || k === 'Confirm') return true;
+  return (e.keyCode || e.which) === 23;
 }
 
-/** 返回/退出键识别（27=Esc，461/10009=TV 返回键） */
-function isBackKey(e) {
+/** 遥控器返回键识别（4=Android BACK，461/10009=TV 返回） */
+export function isBackKey(e) {
   const k = e.key;
-  if (k === 'Escape' || k === 'Esc' || k === 'GoBack' || k === 'BrowserBack' || k === 'Back') return true;
+  if (k === 'GoBack' || k === 'BrowserBack' || k === 'Back' || k === 'Return') return true;
   const lc = e.keyCode || e.which;
-  return lc === 27 || lc === 8 || lc === 461 || lc === 10009;
+  return lc === 4 || lc === 461 || lc === 10009;
 }
 
 function isEditable(el) {
@@ -1064,13 +1066,6 @@ export class RemoteNav {
     if (e.defaultPrevented) return;
     if (e.ctrlKey || e.metaKey || e.altKey) return; // 组合键交还系统
 
-    // 模式切换键
-    if (this.opts.toggleKey && (e.key === this.opts.toggleKey || e.code === this.opts.toggleKey)) {
-      this.disable();
-      e.preventDefault();
-      return;
-    }
-
     const editable = isEditable(document.activeElement);
     const editing = editable && this.opts.pauseWhileEditing;
 
@@ -1098,7 +1093,7 @@ export class RemoteNav {
       return;
     }
 
-    if (isActivationKey(e, !!this.opts.activateOnSpace)) {
+    if (isActivationKey(e)) {
       if (editing) return; // 输入框内回车照常发送
       if (!this._current) {
         // 无焦点时按 OK：先选中入口元素（符合"首次按键选中第一个"）
@@ -1114,19 +1109,6 @@ export class RemoteNav {
     }
 
     if (isBackKey(e) && this.opts.escape === 'exit') {
-      // 输入框里的退格（keyCode 8）必须留给原生删字；其余返回键走分层逻辑
-      const lc = e.keyCode || e.which;
-      const key = String(e.key || '');
-      const realBack =
-        key === 'Escape' ||
-        key === 'Esc' ||
-        key === 'GoBack' ||
-        key === 'BrowserBack' ||
-        key === 'Back' ||
-        lc === 27 ||
-        lc === 461 ||
-        lc === 10009;
-      if (editing && !realBack) return;
       const action = this._backAction();
       if (action === 'exit') {
         this.disable();
@@ -1202,7 +1184,7 @@ export class RemoteNav {
     return null;
   }
 
-  /** 把一次 Escape 交还给页面自己的弹层处理（带标记，避免被本引擎再次拦截） */
+  /** 把一次返回事件交还给页面自己的弹层处理（带标记，避免被本引擎再次拦截） */
   _dispatchEscape(overlay) {
     const active = document.activeElement;
     let target = document;
@@ -1216,16 +1198,23 @@ export class RemoteNav {
     ) {
       target = active;
     }
-    const ev = new KeyboardEvent('keydown', {
-      key: 'Escape',
-      code: 'Escape',
-      keyCode: 27,
-      which: 27,
-      bubbles: true,
-      cancelable: true,
-    });
-    ev.__remoteNavSynthetic = true;
-    target.dispatchEvent(ev);
+    // 用遥控器语义的 GoBack 事件；本引擎合成的事件带标记，不会再被自己处理。
+    // 页面若监听 Escape 关弹层，可同时派发一个独立的 Escape（同样带标记）。
+    for (const spec of [
+      { key: 'GoBack', code: 'GoBack', keyCode: 4 },
+      { key: 'Escape', code: 'Escape', keyCode: 27 },
+    ]) {
+      const ev = new KeyboardEvent('keydown', {
+        key: spec.key,
+        code: spec.code,
+        keyCode: spec.keyCode,
+        which: spec.keyCode,
+        bubbles: true,
+        cancelable: true,
+      });
+      ev.__remoteNavSynthetic = true;
+      target.dispatchEvent(ev);
+    }
   }
 
   /**

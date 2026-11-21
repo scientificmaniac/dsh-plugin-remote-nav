@@ -5,6 +5,18 @@
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循[语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [1.3.0-beta.5] - 2026-11-21
+
+### 变更
+
+- 按键输入只接受遥控器：方向键（语义名 `Up/Down/Left/Right` 或 keyCode 19–22）、OK（`OK/Select/Accept`，keyCode 23）、返回（`Back/GoBack`，keyCode 4/461/10009）、菜单（`Menu/ContextMenu`，keyCode 82/93）。
+- 键盘按键 `F9`、`Arrow*`、`Enter`、`Esc`、空格、退格一律不再触发导航；调试改用侧边栏按钮或控制台 `dshNav.*`。
+- 关闭弹层时向页面派发带标记的 `GoBack` / `Escape` 合成事件，兼容只监听 `Escape` 的弹层。
+
+### 测试
+
+- 新增 4 项遥控器按键识别单测（共 20 项）：确认遥控器按键生效、键盘按键被忽略。
+
 ## [1.3.0-beta.4] - 2026-11-11
 
 ### 新增

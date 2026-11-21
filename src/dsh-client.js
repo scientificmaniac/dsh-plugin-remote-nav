@@ -4,7 +4,7 @@
  * 构建脚本把 remote-nav.js（引擎）、dsh-autostart.js（挂载 / HUD / 诊断）和本文件
  * 拼进一个 ModuleLoader 工厂，调用 createClientPlugin(React) 得到 Cordis 客户端插件：
  *
- *   - apply()  挂载导航引擎（全局键盘监听 + 高亮层 + HUD），并在侧边栏脚部注册开关按钮；
+ *   - apply()  挂载导航引擎（全局遥控器按键监听 + 高亮层 + HUD），并在侧边栏脚部注册开关按钮；
  *   - dispose  由 ctx.effect 注册的清理函数完成，移除全部监听器 / DOM / 样式并删除全局别名；
  *   - locale   文案经宿主 locale 服务提供（zh / en），切换语言即时生效。
  *

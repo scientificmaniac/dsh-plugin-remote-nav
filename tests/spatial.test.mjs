@@ -3,7 +3,7 @@
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { pickDirectional, pickWrap, pickEntry, scrollForce } from '../src/remote-nav.js';
+import { pickDirectional, pickWrap, pickEntry, scrollForce, directionOf, isActivationKey, isBackKey } from '../src/remote-nav.js';
 
 const CFG = { crossAxisWeight: 2.2, alignmentSlack: 64, wrapCrossSlack: 96 };
 
@@ -112,4 +112,40 @@ test('长按加速：从 1x 线性加速到上限后保持', () => {
 test('长按加速：上限为 1 时恒为 1x，负时长不产生减速', () => {
   assert.equal(scrollForce(5000, { scrollAccelMax: 1, scrollAccelRampMs: 100 }), 1);
   assert.equal(scrollForce(-500, { scrollAccelMax: 3, scrollAccelRampMs: 900 }), 1);
+});
+
+test('遥控器方向键：语义名与 DPAD keyCode 19-22 生效', () => {
+  assert.equal(directionOf({ key: 'Up' }), 'up');
+  assert.equal(directionOf({ key: 'DownArrow' }), 'down');
+  assert.equal(directionOf({ key: 'Left' }), 'left');
+  assert.equal(directionOf({ key: 'RightArrow' }), 'right');
+  assert.equal(directionOf({ key: '', keyCode: 19 }), 'up');
+  assert.equal(directionOf({ key: '', keyCode: 20 }), 'down');
+  assert.equal(directionOf({ key: '', keyCode: 21 }), 'left');
+  assert.equal(directionOf({ key: '', keyCode: 22 }), 'right');
+});
+
+test('键盘方向键被忽略：Arrow* 与 keyCode 37-40 不生效', () => {
+  assert.equal(directionOf({ key: 'ArrowUp', keyCode: 38 }), null);
+  assert.equal(directionOf({ key: 'ArrowDown', keyCode: 40 }), null);
+  assert.equal(directionOf({ key: 'ArrowLeft', keyCode: 37 }), null);
+  assert.equal(directionOf({ key: 'ArrowRight', keyCode: 39 }), null);
+});
+
+test('OK 键只认遥控器语义与 DPAD_CENTER(23)，不认键盘 Enter/空格', () => {
+  assert.equal(isActivationKey({ key: 'OK', keyCode: 0 }), true);
+  assert.equal(isActivationKey({ key: 'Select', keyCode: 0 }), true);
+  assert.equal(isActivationKey({ key: '', keyCode: 23 }), true);
+  assert.equal(isActivationKey({ key: 'Enter', keyCode: 13 }), false);
+  assert.equal(isActivationKey({ key: ' ', keyCode: 32 }), false);
+});
+
+test('返回键只认遥控器语义与 keyCode 4/461/10009，不认键盘 Esc/Backspace', () => {
+  assert.equal(isBackKey({ key: 'Back', keyCode: 0 }), true);
+  assert.equal(isBackKey({ key: 'GoBack', keyCode: 0 }), true);
+  assert.equal(isBackKey({ key: '', keyCode: 4 }), true);
+  assert.equal(isBackKey({ key: '', keyCode: 461 }), true);
+  assert.equal(isBackKey({ key: '', keyCode: 10009 }), true);
+  assert.equal(isBackKey({ key: 'Escape', keyCode: 27 }), false);
+  assert.equal(isBackKey({ key: 'Backspace', keyCode: 8 }), false);
 });
